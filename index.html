@@ -201,16 +201,16 @@
     <div class="container">
         <div class="card">
             <h1>🗺️ Landmark Finder</h1>
-            <div class="subhead">Find restaurants, cafes, parks, hospitals and more near you</div>
+            <div class="subhead">Find restaurants, cafes, tea shops, parks, hospitals and more near you</div>
             
             <div id="locationStatus" class="location-status">
                 📍 Getting your location...
             </div>
             
             <div class="categories" id="categories">
-                <button class="cat-btn active" data-category="all">📍 All Points</button>
-                <button class="cat-btn" data-category="restaurant">🍽️ Restaurants</button>
+                <button class="cat-btn active" data-category="restaurant">🍽️ Restaurants</button>
                 <button class="cat-btn" data-category="cafe">☕ Cafes</button>
+                <button class="cat-btn" data-category="tea">🍵 Tea / Tea Shops</button>
                 <button class="cat-btn" data-category="bar">🍸 Bars</button>
                 <button class="cat-btn" data-category="museum">🏛️ Museums</button>
                 <button class="cat-btn" data-category="park">🌳 Parks</button>
@@ -254,7 +254,7 @@
         let placesService;
         let markers = [];
         let currentLocation = null;
-        let currentCategory = 'all';
+        let currentCategory = 'restaurant';
         let currentRadius = 1609;
         
         const locationStatus = document.getElementById('locationStatus');
@@ -355,14 +355,14 @@
             
             clearMarkers();
 
-            // FIXED: Avoid sending parallel bursts of 11 requests. Use general keyword scanning for 'all'
             let request = {
                 location: currentLocation,
                 radius: currentRadius
             };
 
-            if (currentCategory === 'all') {
-                request.keyword = 'establishment'; // Soft catch-all keyword descriptor safely within query window limits
+            // Handle tea category specially (use keyword search since 'tea' isn't a standard Place type)
+            if (currentCategory === 'tea') {
+                request.keyword = 'tea shop';
             } else {
                 request.type = currentCategory;
             }
@@ -449,6 +449,7 @@
         function getCategoryIcon(types) {
             if (!types) return '📍';
             const s = types.join(',');
+            if (s.includes('tea')) return '🍵';
             if (s.includes('restaurant')) return '🍽️';
             if (s.includes('cafe')) return '☕';
             if (s.includes('bar')) return '🍸';
