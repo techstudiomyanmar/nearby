@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Landmark Finder - QR Scan & GPS</title>
+    <title>Landmark Finder - Nearby Places</title>
     
     <style>
         * {
@@ -48,48 +48,6 @@
             color: #9ca3af;
             font-size: 14px;
             margin-bottom: 24px;
-        }
-        
-        .qr-container {
-            text-align: center;
-            padding: 20px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 24px;
-            margin-bottom: 20px;
-        }
-        
-        #qrVideo {
-            width: 100%;
-            max-width: 300px;
-            border-radius: 24px;
-            background: #000;
-            margin: 0 auto;
-            display: none;
-        }
-        
-        .qr-placeholder {
-            width: 100%;
-            max-width: 300px;
-            height: 300px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 24px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            cursor: pointer;
-            border: 2px dashed #3b82f6;
-        }
-        
-        .qr-placeholder span {
-            font-size: 48px;
-            margin-bottom: 12px;
-        }
-        
-        .qr-placeholder p {
-            color: #9ca3af;
-            font-size: 14px;
         }
         
         .categories {
@@ -199,13 +157,6 @@
             color: #f87171;
         }
         
-        .scan-result {
-            text-align: center;
-            margin-top: 16px;
-            font-size: 12px;
-            color: #86efac;
-        }
-        
         button {
             width: 100%;
             padding: 12px;
@@ -245,37 +196,19 @@
             overflow-y: auto;
         }
     </style>
-    
-    <!-- Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBzG2lC2dgtZWe8M895oQU5P55CMlZRyeE&libraries=places"></script>
-    
-    <!-- QR Scanner Library -->
-    <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
 <body>
     <div class="container">
         <div class="card">
             <h1>🗺️ Landmark Finder</h1>
-            <div class="subhead">Scan QR Code • GPS Location • Nearby Landmarks</div>
+            <div class="subhead">Find restaurants, cafes, parks, hospitals and more near you</div>
             
-            <!-- QR Scanner Section -->
-            <div class="qr-container">
-                <div id="qrPlaceholder" class="qr-placeholder" onclick="startQRScanner()">
-                    <span>📷</span>
-                    <p>Tap to scan QR code</p>
-                </div>
-                <video id="qrVideo" autoplay playsinline muted></video>
-                <div id="scanResult" class="scan-result"></div>
-            </div>
-            
-            <!-- Location Status -->
             <div id="locationStatus" class="location-status">
-                📍 Waiting for QR scan...
+                📍 Getting your location...
             </div>
             
-            <!-- Category Filters -->
             <div class="categories" id="categories">
-                <button class="cat-btn active" data-category="all">📍 All</button>
+                <button class="cat-btn active" data-category="all">📍 All Points</button>
                 <button class="cat-btn" data-category="restaurant">🍽️ Restaurants</button>
                 <button class="cat-btn" data-category="cafe">☕ Cafes</button>
                 <button class="cat-btn" data-category="bar">🍸 Bars</button>
@@ -285,9 +218,10 @@
                 <button class="cat-btn" data-category="pharmacy">💊 Pharmacy</button>
                 <button class="cat-btn" data-category="atm">🏧 ATM</button>
                 <button class="cat-btn" data-category="gas_station">⛽ Gas Station</button>
+                <button class="cat-btn" data-category="bank">🏦 Banks</button>
+                <button class="cat-btn" data-category="shopping_mall">🛍️ Shopping Malls</button>
             </div>
             
-            <!-- Range Selector -->
             <div class="range-selector">
                 <label>📍 Range:</label>
                 <select id="rangeSelect">
@@ -299,141 +233,60 @@
                 </select>
             </div>
             
-            <!-- Map -->
             <div id="map"></div>
             
-            <!-- Results -->
             <div class="results-list" id="resultsList">
                 <div style="text-align: center; padding: 40px; color: #6b7280;">
-                    📍 Scan QR code to find nearby landmarks
+                    📍 Waiting for map initialization...
                 </div>
             </div>
             
-            <button id="refreshBtn" disabled>📍 Get Location & Find Landmarks</button>
+            <button id="refreshBtn">📍 Refresh / Find Nearby</button>
             
             <div id="debug" class="debug"></div>
-            <div class="privacy-note">🔒 Location is used only to find nearby landmarks. No data stored.</div>
+            <div class="privacy-note">🔒 Location data is processed locally. Powered by Google Places API.</div>
         </div>
     </div>
 
+    <!-- Cleaned up Script Load Engine -->
     <script>
-        // ============================================================
-        // LANDMARK FINDER - QR Scan + GPS + Google Places API (New)
-        // ============================================================
-        
-        // Google Maps objects
         let map;
         let placesService;
         let markers = [];
         let currentLocation = null;
         let currentCategory = 'all';
-        let currentRadius = 1609; // 1 mile in meters
-        let qrCodeValue = null;
+        let currentRadius = 1609;
         
-        // DOM elements
-        const qrPlaceholder = document.getElementById('qrPlaceholder');
-        const qrVideo = document.getElementById('qrVideo');
-        const scanResult = document.getElementById('scanResult');
         const locationStatus = document.getElementById('locationStatus');
         const resultsList = document.getElementById('resultsList');
         const refreshBtn = document.getElementById('refreshBtn');
         const debugDiv = document.getElementById('debug');
         const rangeSelect = document.getElementById('rangeSelect');
         
-        let videoStream = null;
-        let animationId = null;
-        
         function logDebug(msg) {
             const time = new Date().toLocaleTimeString();
             console.log(`[${time}] ${msg}`);
             debugDiv.innerHTML = `${time}: ${msg}<br>${debugDiv.innerHTML}`;
-            if (debugDiv.innerHTML.split('<br>').length > 30) {
-                const lines = debugDiv.innerHTML.split('<br>');
-                debugDiv.innerHTML = lines.slice(0, 25).join('<br>');
-            }
+            const lines = debugDiv.innerHTML.split('<br>');
+            if (lines.length > 25) debugDiv.innerHTML = lines.slice(0, 20).join('<br>');
         }
-        
-        // ============================================================
-        // QR CODE SCANNER
-        // ============================================================
-        
-        async function startQRScanner() {
-            logDebug('Starting QR scanner...');
-            
-            try {
-                videoStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' }
-                });
-                
-                qrVideo.srcObject = videoStream;
-                qrVideo.style.display = 'block';
-                qrPlaceholder.style.display = 'none';
-                await qrVideo.play();
-                
-                scanResult.innerHTML = '📷 Scanning for QR code...';
-                
-                animationId = requestAnimationFrame(scanQRFrame);
-                
-            } catch (err) {
-                logDebug(`QR scanner error: ${err.message}`);
-                scanResult.innerHTML = '❌ Camera access denied. Please allow camera.';
+
+        // Safe exposure to global space for dynamic HTML strings 
+        window.centerOnPlace = function(lat, lng, name) {
+            if (map) {
+                map.setCenter({ lat, lng });
+                map.setZoom(17);
             }
-        }
-        
-        function scanQRFrame() {
-            if (!qrVideo.videoWidth || !qrVideo.videoHeight) {
-                animationId = requestAnimationFrame(scanQRFrame);
-                return;
-            }
-            
-            const canvas = document.createElement('canvas');
-            canvas.width = qrVideo.videoWidth;
-            canvas.height = qrVideo.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(qrVideo, 0, 0, canvas.width, canvas.height);
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            
-            const code = jsQR(imageData.data, canvas.width, canvas.height, {
-                inversionAttempts: "dontInvert",
-            });
-            
-            if (code) {
-                qrCodeValue = code.data;
-                logDebug(`QR Code detected: ${qrCodeValue}`);
-                scanResult.innerHTML = `✅ QR Code detected: ${qrCodeValue.substring(0, 50)}...`;
-                
-                // Stop scanning
-                if (videoStream) {
-                    videoStream.getTracks().forEach(track => track.stop());
-                }
-                if (animationId) cancelAnimationFrame(animationId);
-                qrVideo.style.display = 'none';
-                qrPlaceholder.style.display = 'flex';
-                qrPlaceholder.innerHTML = '<span>✅</span><p>QR Code scanned!</p>';
-                
-                // Enable location button
-                refreshBtn.disabled = false;
-                locationStatus.innerHTML = '📍 QR scanned. Click "Get Location" to find landmarks.';
-                locationStatus.classList.remove('error');
-                
-                return;
-            }
-            
-            animationId = requestAnimationFrame(scanQRFrame);
-        }
-        
-        // ============================================================
-        // GPS LOCATION
-        // ============================================================
-        
+            logDebug(`Focused on: ${name}`);
+        };
+
         function getCurrentLocation() {
-            logDebug('Requesting GPS location...');
-            locationStatus.innerHTML = '📍 Getting your location...';
+            logDebug('Fetching hardware device coordinates...');
+            locationStatus.innerHTML = '📍 Querying GPS / Network location...';
             locationStatus.classList.remove('error');
             
             if (!navigator.geolocation) {
-                locationStatus.innerHTML = '❌ Geolocation not supported by your browser';
-                locationStatus.classList.add('error');
+                showError('Geolocation tracking is not supported by your current browser environment.');
                 return;
             }
             
@@ -443,45 +296,25 @@
                         lat: position.coords.latitude,
                         lng: position.coords.longitude
                     };
-                    logDebug(`Location: ${currentLocation.lat}, ${currentLocation.lng}`);
-                    locationStatus.innerHTML = `✅ Location found! Latitude: ${currentLocation.lat.toFixed(4)}, Longitude: ${currentLocation.lng.toFixed(4)}`;
+                    logDebug(`Coordinates resolved: ${currentLocation.lat}, ${currentLocation.lng}`);
                     
-                    // Initialize map
-                    initMap();
-                    
-                    // Search for nearby places
+                    if (!map) {
+                        initMap();
+                    } else {
+                        map.setCenter(currentLocation);
+                    }
                     searchNearbyPlaces();
                 },
                 (error) => {
-                    let errorMsg = '';
-                    switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            errorMsg = 'Location permission denied. Please allow location access.';
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            errorMsg = 'Location unavailable. Check GPS.';
-                            break;
-                        case error.TIMEOUT:
-                            errorMsg = 'Location request timeout.';
-                            break;
-                        default:
-                            errorMsg = 'Unknown location error.';
-                    }
-                    logDebug(`Location error: ${errorMsg}`);
-                    locationStatus.innerHTML = `❌ ${errorMsg}`;
-                    locationStatus.classList.add('error');
+                    let errorMsg = 'Unknown hardware or permission error.';
+                    if (error.code === error.PERMISSION_DENIED) errorMsg = 'Location permission denied by user settings.';
+                    if (error.code === error.POSITION_UNAVAILABLE) errorMsg = 'Network tracking signals dropped or unavailable.';
+                    if (error.code === error.TIMEOUT) errorMsg = 'Location request timed out.';
+                    showError(errorMsg);
                 },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                }
+                { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
             );
         }
-        
-        // ============================================================
-        // GOOGLE MAPS
-        // ============================================================
         
         function initMap() {
             if (!currentLocation) return;
@@ -489,253 +322,184 @@
             map = new google.maps.Map(document.getElementById('map'), {
                 center: currentLocation,
                 zoom: 14,
-                styles: [
-                    {
-                        featureType: 'all',
-                        elementType: 'all',
-                        stylers: [{ saturation: -100 }, { lightness: -20 }]
-                    }
-                ]
+                disableDefaultUI: false,
+                styles: [{ featureType: 'all', elementType: 'all', stylers: [{ saturation: -85 }, { lightness: -10 }] }]
             });
             
-            // Add marker for user location
-            const userMarker = new google.maps.Marker({
+            placesService = new google.maps.places.PlacesService(map);
+            
+            new google.maps.Marker({
                 position: currentLocation,
                 map: map,
                 icon: {
                     url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-                    scaledSize: new google.maps.Size(40, 40)
+                    scaledSize: new google.maps.Size(36, 36)
                 },
-                title: 'Your Location'
+                title: 'Current Position'
             });
             
-            logDebug('Map initialized');
+            logDebug('Google Map Instance Engine online.');
         }
         
-        // ============================================================
-        // SEARCH NEARBY PLACES (UPDATED FOR PLACES API NEW)
-        // ============================================================
-        
         function searchNearbyPlaces() {
-            if (!currentLocation) {
-                logDebug('No location available');
+            if (!currentLocation || !placesService) {
+                logDebug('Engine components missing execution contexts.');
                 return;
             }
             
             currentRadius = parseInt(rangeSelect.value);
             const radiusMiles = (currentRadius / 1609).toFixed(1);
             
-            logDebug(`Searching for ${currentCategory} within ${radiusMiles} miles (${currentRadius}m)`);
-            locationStatus.innerHTML = `🔍 Searching for ${currentCategory} within ${radiusMiles} miles...`;
+            logDebug(`Searching category [${currentCategory}] within ${radiusMiles} miles.`);
+            resultsList.innerHTML = '<div style="text-align: center; padding: 40px; color: #60a5fa;">🔍 Streaming database nodes...</div>';
             
-            // Clear existing markers
-            markers.forEach(marker => marker.setMap(null));
-            markers = [];
-            
-            // Build search types
-            let searchTypes = [];
+            clearMarkers();
+
+            // FIXED: Avoid sending parallel bursts of 11 requests. Use general keyword scanning for 'all'
+            let request = {
+                location: currentLocation,
+                radius: currentRadius
+            };
+
             if (currentCategory === 'all') {
-                searchTypes = ['restaurant', 'cafe', 'bar', 'museum', 'park', 'hospital', 'pharmacy', 'atm', 'gas_station'];
+                request.keyword = 'establishment'; // Soft catch-all keyword descriptor safely within query window limits
             } else {
-                searchTypes = [currentCategory];
+                request.type = currentCategory;
             }
-            
-            let allResults = [];
-            let completedRequests = 0;
-            
-            // Create a PlacesService instance
-            const service = new google.maps.places.PlacesService(map);
-            
-            // Search for each type
-            searchTypes.forEach((type) => {
-                const request = {
-                    location: currentLocation,
-                    radius: currentRadius,
-                    type: type
-                };
-                
-                service.nearbySearch(request, (results, status) => {
-                    completedRequests++;
-                    
-                    if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-                        results.forEach(place => {
-                            // Avoid duplicates
-                            if (!allResults.some(p => p.place_id === place.place_id)) {
-                                allResults.push(place);
-                            }
-                        });
-                        logDebug(`Found ${results.length} results for type: ${type}`);
-                    } else if (status !== google.maps.places.PlacesServiceStatus.OK) {
-                        logDebug(`Search failed for type ${type}: ${status}`);
-                    }
-                    
-                    // When all searches complete, display results
-                    if (completedRequests === searchTypes.length) {
-                        displayResults(allResults);
-                    }
-                });
-            });
-            
-            // Timeout fallback
-            setTimeout(() => {
-                if (completedRequests < searchTypes.length) {
-                    logDebug(`Search timeout - displaying ${allResults.length} results so far`);
-                    displayResults(allResults);
+
+            placesService.nearbySearch(request, (results, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                    displayResults(results);
+                } else {
+                    logDebug(`Places transaction status mismatch: ${status}`);
+                    displayResults([]);
                 }
-            }, 8000);
+            });
         }
         
         function displayResults(places) {
             if (!places || places.length === 0) {
-                resultsList.innerHTML = '<div style="text-align: center; padding: 40px; color: #6b7280;">📍 No landmarks found in this area. Try increasing range.</div>';
-                locationStatus.innerHTML = `⚠️ No ${currentCategory} found within ${(currentRadius/1609).toFixed(1)} miles.`;
+                resultsList.innerHTML = '<div style="text-align: center; padding: 40px; color: #9ca3af;">📍 No matching markers found within the designated search range.</div>';
+                locationStatus.innerHTML = `⚠️ Zero results matching context requirements.`;
                 return;
             }
             
-            // Sort by distance
+            // Haversine sorting locally
             places.sort((a, b) => {
-                const distA = calculateDistance(currentLocation, a.geometry.location);
-                const distB = calculateDistance(currentLocation, b.geometry.location);
+                const distA = google.maps.geometry.spherical.computeDistanceBetween(
+                    new google.maps.LatLng(currentLocation.lat, currentLocation.lng), 
+                    a.geometry.location
+                );
+                const distB = google.maps.geometry.spherical.computeDistanceBetween(
+                    new google.maps.LatLng(currentLocation.lat, currentLocation.lng), 
+                    b.geometry.location
+                );
                 return distA - distB;
             });
             
-            logDebug(`Found ${places.length} places total`);
-            locationStatus.innerHTML = `✅ Found ${places.length} ${currentCategory} landmarks within ${(currentRadius/1609).toFixed(1)} miles!`;
-            
-            // Clear existing markers
-            markers.forEach(marker => marker.setMap(null));
-            markers = [];
-            
-            // Create bounds to fit all markers
+            locationStatus.innerHTML = `✅ Displaying ${places.length} nearby locations.`;
             const bounds = new google.maps.LatLngBounds();
             bounds.extend(currentLocation);
             
-            // Build HTML list
             let html = '';
             
-            places.forEach((place, index) => {
+            places.forEach((place) => {
                 const lat = place.geometry.location.lat();
                 const lng = place.geometry.location.lng();
-                const distance = calculateDistance(currentLocation, place.geometry.location);
-                const distanceMiles = (distance / 1609).toFixed(1);
-                const distanceMeters = Math.round(distance);
+                const distanceMeters = Math.round(google.maps.geometry.spherical.computeDistanceBetween(
+                    new google.maps.LatLng(currentLocation.lat, currentLocation.lng),
+                    place.geometry.location
+                ));
+                const distanceMiles = (distanceMeters / 1609).toFixed(1);
                 
-                // Add marker to map
                 const marker = new google.maps.Marker({
-                    position: { lat: lat, lng: lng },
+                    position: { lat, lng },
                     map: map,
-                    title: place.name,
-                    animation: google.maps.Animation.DROP
+                    title: place.name
                 });
                 
                 markers.push(marker);
-                bounds.extend({ lat: lat, lng: lng });
+                bounds.extend({ lat, lng });
                 
-                // Info window
                 const infoWindow = new google.maps.InfoWindow({
-                    content: `<div style="padding: 8px;"><strong>${place.name}</strong><br>${place.vicinity || ''}<br>📍 ${distanceMiles} miles</div>`
+                    content: `<div style="color:#000; padding:4px;"><strong>${place.name}</strong><br>${place.vicinity || ''}<br>⭐ ${place.rating || 'N/A'}</div>`
                 });
                 
                 marker.addListener('click', () => {
                     infoWindow.open(map, marker);
                 });
                 
-                // Add to list
+                const icon = getCategoryIcon(place.types);
+                // Clean single quotes to prevent broken string execution inside DOM templates
+                const cleanName = place.name.replace(/'/g, "\\'");
+                
                 html += `
-                    <div class="result-item" onclick="centerOnPlace(${lat}, ${lng}, '${place.name.replace(/'/g, "\\'")}')">
-                        <div class="result-name">${place.name}</div>
-                        <div class="result-address">${place.vicinity || 'Address not available'}</div>
-                        <div class="result-distance">📍 ${distanceMiles} miles (${distanceMeters}m) | ⭐ ${place.rating || 'N/A'}</div>
+                    <div class="result-item" onclick="window.centerOnPlace(${lat}, ${lng}, '${cleanName}')">
+                        <div class="result-name">${icon} ${place.name}</div>
+                        <div class="result-address">${place.vicinity || 'Address signature unknown'}</div>
+                        <div class="result-distance">📍 ${distanceMiles} mi (${distanceMeters}m) | ⭐ ${place.rating || 'N/A'}</div>
                     </div>
                 `;
             });
             
             resultsList.innerHTML = html;
-            
-            // Fit map to show all markers
-            if (markers.length > 0) {
-                bounds.extend(currentLocation);
-                map.fitBounds(bounds);
-                // Don't zoom too far out
-                const listener = google.maps.event.addListener(map, 'idle', () => {
-                    if (map.getZoom() > 16) map.setZoom(16);
-                    google.maps.event.removeListener(listener);
-                });
-            }
-            
-            logDebug(`Displayed ${places.length} places on map and list`);
+            map.fitBounds(bounds);
         }
         
-        function calculateDistance(point1, point2) {
-            const lat1 = point1.lat;
-            const lon1 = point1.lng;
-            const lat2 = point2.lat();
-            const lon2 = point2.lng();
-            
-            const R = 6371000; // Earth radius in meters
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                      Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
+        function getCategoryIcon(types) {
+            if (!types) return '📍';
+            const s = types.join(',');
+            if (s.includes('restaurant')) return '🍽️';
+            if (s.includes('cafe')) return '☕';
+            if (s.includes('bar')) return '🍸';
+            if (s.includes('museum')) return '🏛️';
+            if (s.includes('park')) return '🌳';
+            if (s.includes('hospital')) return '🏥';
+            if (s.includes('pharmacy')) return '💊';
+            if (s.includes('atm')) return '🏧';
+            if (s.includes('gas_station')) return '⛽';
+            if (s.includes('bank')) return '🏦';
+            if (s.includes('shopping_mall')) return '🛍️';
+            return '📍';
         }
         
-        function centerOnPlace(lat, lng, name) {
-            map.setCenter({ lat: lat, lng: lng });
-            map.setZoom(17);
-            logDebug(`Centered on: ${name}`);
+        function clearMarkers() {
+            markers.forEach(m => m.setMap(null));
+            markers = [];
         }
         
-        // ============================================================
-        // EVENT HANDLERS
-        // ============================================================
+        function showError(msg) {
+            locationStatus.innerHTML = `❌ ${msg}`;
+            locationStatus.classList.add('error');
+            resultsList.innerHTML = `<div style="text-align: center; padding: 40px; color: #f87171;">${msg}</div>`;
+        }
         
-        // Category buttons
+        // Runtime Bindings
         document.querySelectorAll('.cat-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 currentCategory = btn.getAttribute('data-category');
-                
-                if (currentLocation) {
-                    searchNearbyPlaces();
-                } else {
-                    logDebug(`Category changed to ${currentCategory} - waiting for location`);
-                }
+                if (currentLocation) searchNearbyPlaces();
+                else getCurrentLocation();
             });
         });
         
-        // Range selector
-        rangeSelect.addEventListener('change', () => {
-            if (currentLocation) {
-                searchNearbyPlaces();
-            }
-        });
+        rangeSelect.addEventListener('change', () => { if (currentLocation) searchNearbyPlaces(); });
+        refreshBtn.addEventListener('click', getCurrentLocation);
         
-        // Refresh button
-        refreshBtn.addEventListener('click', () => {
-            if (!qrCodeValue) {
-                locationStatus.innerHTML = '⚠️ Please scan QR code first!';
-                locationStatus.classList.add('error');
-                return;
-            }
+        // Native Map API Bootstrapper callback initialization 
+        window.injectMapEngine = function() {
+            logDebug('Google Core Framework Callback detected.');
             getCurrentLocation();
-        });
-        
-        // Check if Google Maps loaded
-        function waitForGoogleMaps() {
-            if (typeof google !== 'undefined' && google.maps) {
-                logDebug('Google Maps loaded');
-            } else {
-                setTimeout(waitForGoogleMaps, 500);
-            }
-        }
-        
-        waitForGoogleMaps();
-        
-        logDebug('Landmark Finder initialized');
+        };
+
+        // Inject script dynamically to avoid dependency deadlocks
+        const s = document.createElement('script');
+        s.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyBzG2lC2dgtZWe8M895oQU5P55CMlZRyeE&libraries=places,geometry&callback=injectMapEngine";
+        s.async = true;
+        s.defer = true;
+        document.head.appendChild(s);
     </script>
 </body>
 </html>
