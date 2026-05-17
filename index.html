@@ -1,9 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Landmark Finder - Nearby Places</title>
+    <title>မြေပုံပေါ်ရှိ အနီးအနားနေရာများ - Landmark Finder</title>
+
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com;
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: https://raw.githubusercontent.com;
+        connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com;
+        frame-src 'none';
+        base-uri 'self';
+        form-action 'self';
+    ">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-T1YX5MWW7C"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-T1YX5MWW7C');
+    </script>
     
     <style>
         * {
@@ -13,7 +34,7 @@
         }
         
         body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Myanmar', sans-serif;
             background: linear-gradient(145deg, #0a0f1d 0%, #0f1629 100%);
             min-height: 100vh;
             padding: 16px;
@@ -200,36 +221,34 @@
 <body>
     <div class="container">
         <div class="card">
-            <h1>🗺️ Landmark Finder</h1>
-            <div class="subhead">Find restaurants, cafes, tea shops, parks, hospitals and more near you</div>
+            <h1>🗺️ အနီးအနားနေရာရှာဖွေရေး</h1>
+            <div class="subhead">သင့်အနီးရှိ စားသောက်ဆိုင်များ၊ လက်ဖက်ရည်ဆိုင်များ၊ ပန်းခြံများ၊ ဆေးရုံများနှင့် အခြားနေရာများကို ရှာဖွေပါ</div>
             
             <div id="locationStatus" class="location-status">
-                📍 Getting your location...
+                📍 သင့်တည်နေရာကို ရှာဖွေနေသည်...
             </div>
             
             <div class="categories" id="categories">
-                <button class="cat-btn active" data-category="restaurant">🍽️ Restaurants</button>
-                <button class="cat-btn" data-category="cafe">☕ Cafes</button>
-                <button class="cat-btn" data-category="tea">🍵 Tea / Tea Shops</button>
-                <button class="cat-btn" data-category="bar">🍸 Bars</button>
-                <button class="cat-btn" data-category="museum">🏛️ Museums</button>
-                <button class="cat-btn" data-category="park">🌳 Parks</button>
-                <button class="cat-btn" data-category="hospital">🏥 Hospitals</button>
-                <button class="cat-btn" data-category="pharmacy">💊 Pharmacy</button>
-                <button class="cat-btn" data-category="atm">🏧 ATM</button>
-                <button class="cat-btn" data-category="gas_station">⛽ Gas Station</button>
-                <button class="cat-btn" data-category="bank">🏦 Banks</button>
-                <button class="cat-btn" data-category="shopping_mall">🛍️ Shopping Malls</button>
+                <button class="cat-btn active" data-category="restaurant">🍽️ စားသောက်ဆိုင်</button>
+                <button class="cat-btn" data-category="cafe">☕ ကော်ဖီဆိုင်</button>
+                <button class="cat-btn" data-category="tea">🍵 လက်ဖက်ရည်ဆိုင်</button>
+                <button class="cat-btn" data-category="bar">🍸 အရက်ဆိုင်</button>
+                <button class="cat-btn" data-category="museum">🏛် ပြတိုက်</button>
+                <button class="cat-btn" data-category="park">🌳 ပန်းခြံ</button>
+                <button class="cat-btn" data-category="hospital">🏥 ဆေးရုံ</button>
+                <button class="cat-btn" data-category="pharmacy">💊 ဆေးဆိုင်</button>
+                <button class="cat-btn" data-category="atm">🏧 ငွေထုတ်စက်</button>
+                <button class="cat-btn" data-category="gas_station">⛽ ဓာတ်ဆီဆိုင်</button>
+                <button class="cat-btn" data-category="bank">🏦 ဘဏ်</button>
+                <button class="cat-btn" data-category="shopping_mall">🛍️ ဈေးဝယ်စင်တာ</button>
             </div>
             
             <div class="range-selector">
-                <label>📍 Range:</label>
+                <label>📍 အကွာအဝေး:</label>
                 <select id="rangeSelect">
-                    <option value="500">0.3 miles (500m)</option>
-                    <option value="1000">0.6 miles (1km)</option>
-                    <option value="1609" selected>1 mile (1.6km)</option>
-                    <option value="3218">2 miles (3.2km)</option>
-                    <option value="4827">3 miles (4.8km)</option>
+                    <option value="1609" selected>၁ မိုင် (၁.၆ ကီလိုမီတာ)</option>
+                    <option value="3218">၂ မိုင် (၃.၂ ကီလိုမီတာ)</option>
+                    <option value="4827">၃ မိုင် (၄.၈ ကီလိုမီတာ)</option>
                 </select>
             </div>
             
@@ -237,14 +256,14 @@
             
             <div class="results-list" id="resultsList">
                 <div style="text-align: center; padding: 40px; color: #6b7280;">
-                    📍 Waiting for map initialization...
+                    📍 မြေပုံစတင်ရန် စောင့်ဆိုင်းနေသည်...
                 </div>
             </div>
             
-            <button id="refreshBtn">📍 Refresh / Find Nearby</button>
+            <button id="refreshBtn">📍 ပြန်လည်ရှာဖွေရန် / အနီးအနားရှာရန်</button>
             
             <div id="debug" class="debug"></div>
-            <div class="privacy-note">🔒 Location data is processed locally. Powered by Google Places API.</div>
+            <div class="privacy-note">🔒 သင့်တည်နေရာအား အနီးအနားနေရာများရှာဖွေရန်အတွက်သာ အသုံးပြုပါသည်။ Google Places API ဖြင့် မောင်းနှင်ထားသည်။</div>
         </div>
     </div>
 
@@ -277,16 +296,16 @@
                 map.setCenter({ lat, lng });
                 map.setZoom(17);
             }
-            logDebug(`Focused on: ${name}`);
+            logDebug(`အာရုံစိုက်နေရာ - ${name}`);
         };
 
         function getCurrentLocation() {
-            logDebug('Fetching hardware device coordinates...');
-            locationStatus.innerHTML = '📍 Querying GPS / Network location...';
+            logDebug('တည်နေရာ ရယူနေသည်...');
+            locationStatus.innerHTML = '📍 တည်နေရာ ရှာဖွေနေသည်...';
             locationStatus.classList.remove('error');
             
             if (!navigator.geolocation) {
-                showError('Geolocation tracking is not supported by your current browser environment.');
+                showError('သင့်ဘရောက်ဆာသည် တည်နေရာခြေရာခံခြင်းကို မပံ့ပိုးပါ။');
                 return;
             }
             
@@ -296,7 +315,7 @@
                         lat: position.coords.latitude,
                         lng: position.coords.longitude
                     };
-                    logDebug(`Coordinates resolved: ${currentLocation.lat}, ${currentLocation.lng}`);
+                    logDebug(`တည်နေရာ: ${currentLocation.lat}, ${currentLocation.lng}`);
                     
                     if (!map) {
                         initMap();
@@ -306,10 +325,10 @@
                     searchNearbyPlaces();
                 },
                 (error) => {
-                    let errorMsg = 'Unknown hardware or permission error.';
-                    if (error.code === error.PERMISSION_DENIED) errorMsg = 'Location permission denied by user settings.';
-                    if (error.code === error.POSITION_UNAVAILABLE) errorMsg = 'Network tracking signals dropped or unavailable.';
-                    if (error.code === error.TIMEOUT) errorMsg = 'Location request timed out.';
+                    let errorMsg = 'အမည်မသိ အမှားတစ်ခု ဖြစ်ပွားနေသည်။';
+                    if (error.code === error.PERMISSION_DENIED) errorMsg = 'တည်နေရာခွင့်ပြုချက် ငြင်းပယ်ထားသည်။ ကျေးဇူးပြု၍ ခွင့်ပြုပြီး ပြန်လည်စမ်းသပ်ပါ။';
+                    if (error.code === error.POSITION_UNAVAILABLE) errorMsg = 'တည်နေရာအချက်အလက် ရရှိနိုင်မှု မရှိပါ။';
+                    if (error.code === error.TIMEOUT) errorMsg = 'တည်နေရာတောင်းဆိုမှု အချိန်ကုန်သွားပါပြီ။';
                     showError(errorMsg);
                 },
                 { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
@@ -335,23 +354,23 @@
                     url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
                     scaledSize: new google.maps.Size(36, 36)
                 },
-                title: 'Current Position'
+                title: 'သင်၏တည်နေရာ'
             });
             
-            logDebug('Google Map Instance Engine online.');
+            logDebug('Google မြေပုံ စတင်အသက်ဝင်ပါပြီ။');
         }
         
         function searchNearbyPlaces() {
             if (!currentLocation || !placesService) {
-                logDebug('Engine components missing execution contexts.');
+                logDebug('မြေပုံဝန်ဆောင်မှု မရရှိနိုင်ပါ။');
                 return;
             }
             
             currentRadius = parseInt(rangeSelect.value);
             const radiusMiles = (currentRadius / 1609).toFixed(1);
             
-            logDebug(`Searching category [${currentCategory}] within ${radiusMiles} miles.`);
-            resultsList.innerHTML = '<div style="text-align: center; padding: 40px; color: #60a5fa;">🔍 Streaming database nodes...</div>';
+            logDebug(`အမျိုးအစား [${currentCategory}] ကို ${radiusMiles} မိုင်အကွာအဝေးတွင် ရှာဖွေနေသည်။`);
+            resultsList.innerHTML = '<div style="text-align: center; padding: 40px; color: #60a5fa;">🔍 အနီးအနားနေရာများကို ရှာဖွေနေသည်...</div>';
             
             clearMarkers();
 
@@ -371,7 +390,7 @@
                 if (status === google.maps.places.PlacesServiceStatus.OK && results) {
                     displayResults(results);
                 } else {
-                    logDebug(`Places transaction status mismatch: ${status}`);
+                    logDebug(`ရှာဖွေမှုအခြေအနေ: ${status}`);
                     displayResults([]);
                 }
             });
@@ -379,8 +398,8 @@
         
         function displayResults(places) {
             if (!places || places.length === 0) {
-                resultsList.innerHTML = '<div style="text-align: center; padding: 40px; color: #9ca3af;">📍 No matching markers found within the designated search range.</div>';
-                locationStatus.innerHTML = `⚠️ Zero results matching context requirements.`;
+                resultsList.innerHTML = '<div style="text-align: center; padding: 40px; color: #9ca3af;">📍 သတ်မှတ်ထားသောအကွာအဝေးအတွင်း နေရာများ မတွေ့ရှိပါ။</div>';
+                locationStatus.innerHTML = `⚠️ ရလဒ်များ မတွေ့ရှိပါ။`;
                 return;
             }
             
@@ -397,7 +416,7 @@
                 return distA - distB;
             });
             
-            locationStatus.innerHTML = `✅ Displaying ${places.length} nearby locations.`;
+            locationStatus.innerHTML = `✅ အနီးအနားရှိ ${places.length} နေရာများကို တွေ့ရှိပါသည်။`;
             const bounds = new google.maps.LatLngBounds();
             bounds.extend(currentLocation);
             
@@ -422,7 +441,7 @@
                 bounds.extend({ lat, lng });
                 
                 const infoWindow = new google.maps.InfoWindow({
-                    content: `<div style="color:#000; padding:4px;"><strong>${place.name}</strong><br>${place.vicinity || ''}<br>⭐ ${place.rating || 'N/A'}</div>`
+                    content: `<div style="color:#000; padding:4px;"><strong>${place.name}</strong><br>${place.vicinity || ''}<br>⭐ ${place.rating || 'အဆင့်သတ်မှတ်ချက်မရှိ'}</div>`
                 });
                 
                 marker.addListener('click', () => {
@@ -436,8 +455,8 @@
                 html += `
                     <div class="result-item" onclick="window.centerOnPlace(${lat}, ${lng}, '${cleanName}')">
                         <div class="result-name">${icon} ${place.name}</div>
-                        <div class="result-address">${place.vicinity || 'Address signature unknown'}</div>
-                        <div class="result-distance">📍 ${distanceMiles} mi (${distanceMeters}m) | ⭐ ${place.rating || 'N/A'}</div>
+                        <div class="result-address">${place.vicinity || 'လိပ်စာ မရရှိနိုင်ပါ'}</div>
+                        <div class="result-distance">📍 ${distanceMiles} မိုင် (${distanceMeters} မီတာ) | ⭐ ${place.rating || 'N/A'}</div>
                     </div>
                 `;
             });
@@ -491,7 +510,7 @@
         
         // Native Map API Bootstrapper callback initialization 
         window.injectMapEngine = function() {
-            logDebug('Google Core Framework Callback detected.');
+            logDebug('Google မြေပုံ API စတင်အလုပ်လုပ်ပါပြီ။');
             getCurrentLocation();
         };
 
