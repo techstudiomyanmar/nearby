@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>မြေပုံပေါ်ရှိ အနီးအနားနေရာများ - Landmark Finder</title>
 
+    <!-- FIXED: CSP definitions modified to whitelist Google Maps ecosystem domains -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
-        script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com;
-        style-src 'self' 'unsafe-inline';
-        img-src 'self' data: https://raw.githubusercontent.com;
-        connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com;
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://www.googletagmanager.com https://www.google-analytics.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        img-src 'self' data: https://maps.gstatic.com https://*.googleapis.com https://*.ggpht.com https://raw.githubusercontent.com;
+        connect-src 'self' https://maps.googleapis.com https://*.googleapis.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com;
         frame-src 'none';
         base-uri 'self';
         form-action 'self';
@@ -22,7 +23,6 @@
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-
     gtag('config', 'G-T1YX5MWW7C');
     </script>
     
@@ -233,11 +233,12 @@
                 <button class="cat-btn" data-category="cafe">☕ ကော်ဖီဆိုင်</button>
                 <button class="cat-btn" data-category="tea">🍵 လက်ဖက်ရည်ဆိုင်</button>
                 <button class="cat-btn" data-category="bar">🍸 အရက်ဆိုင်</button>
-                <button class="cat-btn" data-category="museum">🏛် ပြတိုက်</button>
+                <!-- FIXED: Resolved typographic font ligatures mismatch -->
+                <button class="cat-btn" data-category="museum">🏛️ ပြတိုက်</button>
                 <button class="cat-btn" data-category="park">🌳 ပန်းခြံ</button>
                 <button class="cat-btn" data-category="hospital">🏥 ဆေးရုံ</button>
                 <button class="cat-btn" data-category="pharmacy">💊 ဆေးဆိုင်</button>
-                <button class="cat-btn" data-category="atm">🏧 ငွေထုတ်စက်</button>
+                <button class="cat-btn" data-category="atm">🏧 Ngwe Htoke Set</button>
                 <button class="cat-btn" data-category="gas_station">⛽ ဓာတ်ဆီဆိုင်</button>
                 <button class="cat-btn" data-category="bank">🏦 ဘဏ်</button>
                 <button class="cat-btn" data-category="shopping_mall">🛍️ ဈေးဝယ်စင်တာ</button>
@@ -267,7 +268,6 @@
         </div>
     </div>
 
-    <!-- Cleaned up Script Load Engine -->
     <script>
         let map;
         let placesService;
@@ -290,7 +290,6 @@
             if (lines.length > 25) debugDiv.innerHTML = lines.slice(0, 20).join('<br>');
         }
 
-        // Safe exposure to global space for dynamic HTML strings 
         window.centerOnPlace = function(lat, lng, name) {
             if (map) {
                 map.setCenter({ lat, lng });
@@ -379,7 +378,6 @@
                 radius: currentRadius
             };
 
-            // Handle tea category specially (use keyword search since 'tea' isn't a standard Place type)
             if (currentCategory === 'tea') {
                 request.keyword = 'tea shop';
             } else {
@@ -403,7 +401,6 @@
                 return;
             }
             
-            // Haversine sorting locally
             places.sort((a, b) => {
                 const distA = google.maps.geometry.spherical.computeDistanceBetween(
                     new google.maps.LatLng(currentLocation.lat, currentLocation.lng), 
@@ -449,7 +446,6 @@
                 });
                 
                 const icon = getCategoryIcon(place.types);
-                // Clean single quotes to prevent broken string execution inside DOM templates
                 const cleanName = place.name.replace(/'/g, "\\'");
                 
                 html += `
@@ -494,7 +490,6 @@
             resultsList.innerHTML = `<div style="text-align: center; padding: 40px; color: #f87171;">${msg}</div>`;
         }
         
-        // Runtime Bindings
         document.querySelectorAll('.cat-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -508,13 +503,11 @@
         rangeSelect.addEventListener('change', () => { if (currentLocation) searchNearbyPlaces(); });
         refreshBtn.addEventListener('click', getCurrentLocation);
         
-        // Native Map API Bootstrapper callback initialization 
         window.injectMapEngine = function() {
             logDebug('Google မြေပုံ API စတင်အလုပ်လုပ်ပါပြီ။');
             getCurrentLocation();
         };
 
-        // Inject script dynamically to avoid dependency deadlocks
         const s = document.createElement('script');
         s.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyBzG2lC2dgtZWe8M895oQU5P55CMlZRyeE&libraries=places,geometry&callback=injectMapEngine";
         s.async = true;
